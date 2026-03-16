@@ -1,5 +1,7 @@
 import os
+import socket
 from pathlib import Path
+from urllib.parse import urlparse
 
 import requests
 import urllib3
@@ -11,7 +13,7 @@ env_path = Path(__file__).resolve().parents[2] / "configs" / "api_keys.env"
 load_dotenv(env_path)
 
 MEGA_API_KEY = os.getenv("MEGA_API_KEY")
-MEGA_URL = "https://api.megallm.io/v1/chat/completions"
+MEGA_URL = os.getenv("MEGA_API_URL", "https://ai.megallm.io/v1/chat/completions")
 
 _LAST_CALL_INFO = {
     "provider": "none",
@@ -65,7 +67,19 @@ def _query_megallm(query: str, timeout_seconds: int = 30) -> str:
             verify=False,
         )
     except requests.exceptions.SSLError as exc:
-        raise RuntimeError(f"MegaLLM SSL error: {exc}") from exc
+        host = urlparse(MEGA_URL).hostname or "unknown-host"
+        resolved_ip = "unknown"
+        try:
+            resolved_ip = socket.gethostbyname(host)
+        except Exception:
+            pass
+        raise RuntimeError(
+            "MegaLLM TLS handshake failed before HTTP request. "
+            f"URL={MEGA_URL}, host={host}, resolved_ip={resolved_ip}. "
+            "Set MEGA_API_URL in configs/api_keys.env to the exact endpoint from your MegaLLM dashboard/docs. "
+            "Current endpoint may be incorrect or blocked by upstream TLS config. "
+            f"Original error: {exc}"
+        ) from exc
     except requests.exceptions.RequestException as exc:
         raise RuntimeError(f"MegaLLM request failed for {MEGA_URL}: {exc}") from exc
 

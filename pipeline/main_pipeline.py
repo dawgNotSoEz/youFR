@@ -16,6 +16,11 @@ def run_pipeline(query):
     llm_info = get_last_call_info()
 
     print("LLM Call Info:", llm_info)
+    usage = llm_info.get("usage") if isinstance(llm_info, dict) else None
+    if isinstance(usage, dict):
+        total_tokens = usage.get("total_tokens")
+        if total_tokens is not None:
+            print(f"LLM Tokens Used: {total_tokens}")
 
     print("AI Answer:\n", answer)
 
