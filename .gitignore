@@ -16,7 +16,7 @@ Thumbs.db
 # Environment files
 .env
 .env.*
-
+api_keys.env
 # Build output
 dist/
 build/
@@ -35,3 +35,10 @@ coverage/
 *.local
 *.cache
 *.tgz
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
