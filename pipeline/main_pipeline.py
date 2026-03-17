@@ -1,4 +1,5 @@
 import sys
+import json
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
@@ -8,7 +9,27 @@ if str(ROOT_DIR) not in sys.path:
 from services.llm_generator.generate import generate_answer, get_last_call_info
 from services.claim_extractor.extractor import extract_claims_with_metadata
 from services.verifier.groq_verifier import verify_claim
-from services.hallucination_detector.scoring import detect_hallucination
+from services.detector.hallucination import detect_hallucination
+from services.classifier.failure_classifier import classify_failure
+from services.explainer.explain import generate_explanation
+
+
+def _append_run_log(entry: dict) -> None:
+    log_path = ROOT_DIR / "logs" / "run_log.json"
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if not log_path.exists():
+        log_path.write_text("[]", encoding="utf-8")
+
+    try:
+        existing = json.loads(log_path.read_text(encoding="utf-8"))
+        if not isinstance(existing, list):
+            existing = []
+    except Exception:
+        existing = []
+
+    existing.append(entry)
+    log_path.write_text(json.dumps(existing, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
 def run_pipeline(query):
@@ -39,21 +60,41 @@ def run_pipeline(query):
 
         results.append(verdict)
 
-    hallucination, reason = detect_hallucination(results)
+    detection = detect_hallucination(results)
+    hallucination = detection["hallucination"]
+    reason = detection["reason"]
 
-    if not hallucination and all(r.get("status") == "TRUE" for r in results):
+    if results and not hallucination and all(r.get("status") == "TRUE" for r in results):
         reason = "All extracted factual claims verified as true"
+
+    error_type = classify_failure(results)
+    explanation = generate_explanation(error_type)
 
     final_summary = {
         "hallucination": hallucination,
         "reason": reason,
         "notes": notes,
+        "error_type": error_type,
+        "explanation": explanation,
+        "metrics": detection["metrics"],
     }
 
-    return {
+    output = {
         "results": results,
         "summary": final_summary,
     }
+
+    _append_run_log(
+        {
+            "query": query,
+            "answer": answer,
+            "claims": claims,
+            "results": results,
+            "final": final_summary,
+        }
+    )
+
+    return output
 
 
 if __name__ == "__main__":
@@ -67,6 +108,12 @@ if __name__ == "__main__":
 
         print("\nClaim:", verdict["claim"])
         print("Verification:", verdict)
+
+    print("\n--- ERROR TYPE ---")
+    print(pipeline_output["summary"]["error_type"])
+
+    print("\n--- EXPLANATION ---")
+    print(pipeline_output["summary"]["explanation"])
 
     print("\nFinal Output:")
     print(pipeline_output["summary"])

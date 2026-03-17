@@ -1,20 +1,19 @@
-import re
+import spacy
+
+
+nlp = spacy.load("en_core_web_sm")
 
 
 CLAIM_TYPES = {
-    "FACTUAL": "Declarative, verifiable factual claim.",
-    "ENTITY": "Entity-only mention without a verifiable fact.",
-    "FRAGMENT": "Incomplete sentence, header, or formatting fragment.",
-    "OPINION": "Subjective/opinion statement.",
+    "FACTUAL": "Declarative factual sentence that can be verified.",
+    "ENTITY": "Entity mention without a standalone factual assertion.",
+    "FRAGMENT": "Incomplete phrase/header/broken sentence.",
+    "OPINION": "Subjective statement not suitable for factual verification.",
 }
 
 
 def _clean_line(line: str) -> str:
-    cleaned = line.strip()
-    for prefix in ("- ", "• ", "* ", "1. ", "2. ", "3. ", "4. ", "5. "):
-        if cleaned.startswith(prefix):
-            cleaned = cleaned[len(prefix):].strip()
-    return cleaned
+    return line.strip().replace("- ", "").replace("• ", "")
 
 
 def _classify_claim(line: str) -> str:
@@ -42,30 +41,54 @@ def _classify_claim(line: str) -> str:
     return "FACTUAL"
 
 
+def _resolve_pronoun_prefix(sentence: str, last_entity: str | None) -> str:
+    if not last_entity:
+        return sentence
+
+    words = sentence.split()
+    if not words:
+        return sentence
+
+    first = words[0].lower().strip(" ,:;-")
+    if first in {"he", "she", "his", "her"}:
+        words[0] = last_entity
+        return " ".join(words)
+
+    return sentence
+
+
 def extract_claims_with_metadata(text: str) -> dict:
+    doc = nlp(text)
+
     claims = []
     notes = []
     typed_claims = []
 
-    for raw_line in text.split("\n"):
-        line = _clean_line(raw_line)
+    last_entity = None
 
-        if not line:
+    for sent in doc.sents:
+        sentence_people = [ent.text for ent in sent.ents if ent.label_ == "PERSON"]
+
+        line = _clean_line(sent.text)
+
+        if not line or len(line) < 25:
+            if sentence_people:
+                last_entity = sentence_people[0]
             continue
 
-        sentence_candidates = re.split(r"(?<=[.!?])\s+", line)
-        for candidate in sentence_candidates:
-            candidate = candidate.strip()
-            if not candidate:
-                continue
+        resolved = _resolve_pronoun_prefix(line, last_entity)
+        claim = resolved if resolved.endswith(".") else f"{resolved}."
 
-            claim_type = _classify_claim(candidate)
-            typed_claims.append({"claim": candidate, "type": claim_type})
+        claim_type = _classify_claim(claim)
+        typed_claims.append({"claim": claim, "type": claim_type})
 
-            if claim_type == "FACTUAL":
-                claims.append(candidate)
-            elif claim_type in {"FRAGMENT", "ENTITY", "OPINION"}:
-                notes.append(f"Non-claim fragment ignored: '{candidate}'")
+        if claim_type == "FACTUAL":
+            claims.append(claim)
+        else:
+            notes.append(f"Non-claim fragment ignored: '{claim}'")
+
+        if sentence_people:
+            last_entity = sentence_people[0]
 
     return {
         "claims": claims,
