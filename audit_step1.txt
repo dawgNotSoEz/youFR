@@ -1,0 +1,74 @@
+Step 1 Audit Report — Strict Evidence-Grounded Verification (V2)
+Date: 2026-03-18
+Target file: services/verifier/groq_verifier.py
+
+Changes made
+1) Added strict system prompt
+- Replaced system prompt content with:
+  "You are a strict factual verifier.
+  Use ONLY the provided evidence.
+  Do NOT use prior knowledge.
+  If the evidence does not clearly support the claim, return UNCERTAIN.
+  Respond ONLY in JSON:
+  {
+  \"status\": \"TRUE | FALSE | UNCERTAIN\",
+  \"confidence\": float (0 to 1),
+  \"reason\": \"short explanation referencing evidence\"
+  }"
+
+2) Enforced evidence usage gate
+- In verify_claim(), added early check on evidence:
+  - If evidence is None/empty OR trimmed length < 20, immediate return:
+    {
+      "status": "UNCERTAIN",
+      "confidence": 0.0,
+      "reason": "No sufficient evidence provided"
+    }
+
+3) Modified request payload
+- LLM user message now always includes both fields in required format:
+  Claim: <claim>
+  Evidence: <retrieved_text>
+
+4) Strict JSON parsing behavior
+- _parse_verifier_output() now returns:
+  {
+    "status": "UNCERTAIN",
+    "confidence": 0.0,
+    "reason": "Invalid verifier response format"
+  }
+  when response is empty or JSON parsing fails.
+- Removed non-JSON fallback interpretation to enforce strict format.
+
+5) Added mandatory debug logging
+- Added prints for:
+  - claim
+  - evidence snippet (first 200 chars)
+  - raw LLM response
+
+Sample inputs/outputs (validation run)
+Case 1
+Input:
+- Claim: "Einstein won Nobel Prize for relativity"
+- Evidence: "Einstein won Nobel Prize for photoelectric effect"
+Output:
+- status: FALSE
+- confidence: 1.0
+- reason: "Einstein's Nobel Prize was awarded for the photoelectric effect, not relativity (as stated in the evidence)"
+Result: Matches expected FALSE.
+
+Case 2
+Input:
+- Claim: "Einstein discovered relativity"
+- Evidence: ""
+Output:
+- status: UNCERTAIN
+- confidence: 0.0
+- reason: "No sufficient evidence provided"
+Result: Matches expected UNCERTAIN.
+
+Confirmation that evidence is enforced
+- The verifier cannot proceed to model inference without sufficient evidence.
+- Weak/missing evidence is hard-stopped to UNCERTAIN.
+- Model prompt explicitly prohibits prior knowledge and requires evidence-only judgment.
+- Invalid/non-JSON model output cannot be interpreted as TRUE/FALSE and is forced to UNCERTAIN.

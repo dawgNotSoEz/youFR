@@ -3,7 +3,9 @@
 A small fact-checking pipeline with this stack:
 - **Answer generation:** MegaLLM API (cloud)
 - **Claim extraction:** atomic claim extraction
-- **Verification:** Groq `llama-3.1-8b-instant`
+- **Verification (V1 + V2):** Groq `llama-3.1-8b-instant`
+  - V1: LLM-only verifier
+  - V2: strict evidence-grounded verifier
 - **Decisioning:** Aggregator + Detector + Failure Classifier + Explainer
 
 ## 1) Prerequisites
@@ -76,6 +78,7 @@ The script prints:
 A healthy run should show:
 - `provider: megallm` for answer generation
 - verification outputs returned by Groq
+- V1 and V2 are fused per claim before final hallucination decision
 
 ## 6) How to check what is happening
 
@@ -108,7 +111,6 @@ Use these checks every run:
 Decision rules:
 - Any `FALSE` claim => hallucination `True`
 - `UNCERTAIN` claims > 50% => hallucination `True`
-- low-confidence (`confidence < 0.7`) claims > 50% => hallucination `True`
 - Otherwise => hallucination `False`
 
 ## 7) Troubleshooting

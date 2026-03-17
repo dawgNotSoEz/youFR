@@ -1,0 +1,130 @@
+Step 2 Audit Report — Fusion Engine (Multi-Verifier Decision Layer)
+Date: 2026-03-18
+Target file: services/aggregator/aggregate.py
+Pipeline integration: pipeline/main_pipeline.py
+
+Fusion logic implemented
+- Added function: fuse_results(llm_result, evidence_result)
+- Input format per claim is supported as:
+  {
+    "claim": str,
+    "llm": {"status": str, "confidence": float},
+    "evidence": {"status": str, "confidence": float}
+  }
+- Strict decision logic implemented exactly:
+  1) If either verifier is FALSE -> final_status FALSE, reason "At least one verifier marked FALSE"
+  2) Else if statuses disagree -> final_status UNCERTAIN, reason "Disagreement between verifiers"
+  3) Else if min confidence < 0.7 -> final_status UNCERTAIN, reason "Low confidence"
+  4) Else -> final_status TRUE, reason "Both verifiers agree with high confidence"
+
+Pipeline integration changes
+- Replaced old hallucination decision path in main pipeline with aggregation-based fusion output.
+- For each claim, pipeline now builds fusion input using:
+  - llm status/confidence
+  - evidence status/confidence
+- Added mandatory per-claim debug output in pipeline:
+  - claim
+  - llm status
+  - evidence status
+  - fused result
+- Final claim decision source is fused output from aggregator.
+
+Aggregate metrics implemented
+- total_claims
+- false_count
+- uncertain_count
+- uncertain_ratio
+
+Final decision rule implemented
+- hallucination = True when:
+  - any fused claim is FALSE
+  OR
+  - uncertain_ratio > 0.5
+
+Validation (required test cases)
+Executed direct tests against fuse_results:
+
+Case A: Both TRUE -> final TRUE
+Input:
+- llm: {"status":"TRUE","confidence":0.95}
+- evidence: {"status":"TRUE","confidence":0.92}
+Output:
+- {"final_status":"TRUE","reason":"Both verifiers agree with high confidence"}
+
+Case B: TRUE + FALSE -> final FALSE
+Input:
+- llm: {"status":"TRUE","confidence":0.99}
+- evidence: {"status":"FALSE","confidence":0.88}
+Output:
+- {"final_status":"FALSE","reason":"At least one verifier marked FALSE"}
+
+Case C: TRUE + UNCERTAIN -> final UNCERTAIN
+Input:
+- llm: {"status":"TRUE","confidence":0.95}
+- evidence: {"status":"UNCERTAIN","confidence":0.80}
+Output:
+- {"final_status":"UNCERTAIN","reason":"Disagreement between verifiers"}
+
+Case D: Low confidence -> UNCERTAIN
+Input:
+- llm: {"status":"TRUE","confidence":0.65}
+- evidence: {"status":"TRUE","confidence":0.99}
+Output:
+- {"final_status":"UNCERTAIN","reason":"Low confidence"}
+
+Final pipeline output sample (fused aggregate)
+Sample aggregate output shape:
+{
+  "hallucination": true,
+  "reason": "False claims detected after fusion",
+  "total_claims": 3,
+  "false_count": 1,
+  "uncertain_count": 1,
+  "uncertain_ratio": 0.3333333333333333,
+  "fused_results": [
+    {
+      "claim": "c1",
+      "llm": {"status": "TRUE", "confidence": 0.95},
+      "evidence": {"status": "TRUE", "confidence": 0.91},
+      "fused": {"final_status": "TRUE", "reason": "Both verifiers agree with high confidence"}
+    },
+    {
+      "claim": "c2",
+      "llm": {"status": "TRUE", "confidence": 0.96},
+      "evidence": {"status": "UNCERTAIN", "confidence": 0.9},
+      "fused": {"final_status": "UNCERTAIN", "reason": "Disagreement between verifiers"}
+    },
+    {
+      "claim": "c3",
+      "llm": {"status": "TRUE", "confidence": 0.99},
+      "evidence": {"status": "FALSE", "confidence": 0.8},
+      "fused": {"final_status": "FALSE", "reason": "At least one verifier marked FALSE"}
+    }
+  ]
+}
+
+End-to-end runtime sample (actual pipeline execution)
+Command:
+- c:/Users/param/Documents/Code/ai-hall/.venv/Scripts/python.exe pipeline/main_pipeline.py
+
+Observed fused per-claim status:
+- Claim 1: llm=UNCERTAIN, evidence=TRUE -> fused=UNCERTAIN (Disagreement between verifiers)
+- Claim 2: llm=UNCERTAIN, evidence=TRUE -> fused=UNCERTAIN (Disagreement between verifiers)
+
+Observed final summary:
+{
+  "hallucination": true,
+  "reason": "Too many uncertain claims after fusion",
+  "error_type": "UNVERIFIABLE",
+  "metrics": {
+    "total_claims": 2,
+    "false_count": 0,
+    "uncertain_count": 2,
+    "uncertain_ratio": 1.0
+  }
+}
+
+Decision-rule confirmation from runtime
+- any FALSE = false
+- uncertain_ratio = 1.0 (> 0.5)
+- final hallucination = true
