@@ -62,10 +62,36 @@ def _classify_claim(line: str) -> str:
     return "FACTUAL"
 
 
+def _get_main_entity(text: str) -> str | None:
+    doc = nlp(text)
+    for ent in doc.ents:
+        if ent.label_ == "PERSON":
+            return ent.text
+    return None
+
+
+def _resolve_leading_pronoun(sentence: str, main_entity: str | None) -> str:
+    if not main_entity:
+        return sentence
+
+    parts = sentence.split(maxsplit=1)
+    if not parts:
+        return sentence
+
+    first_token = parts[0]
+    first_lower = first_token.lower().strip("\"'()[]{}.,:;!?-")
+    if first_lower not in {"he", "she", "they", "it", "this"}:
+        return sentence
+
+    remainder = parts[1] if len(parts) > 1 else ""
+    return f"{main_entity} {remainder}".strip()
+
+
 def extract_claims_with_metadata(text: str) -> dict:
     claims = []
     notes = []
     typed_claims = []
+    main_entity = _get_main_entity(text)
 
     for raw_line in text.splitlines():
         base_line = _clean_line(raw_line)
@@ -76,6 +102,7 @@ def extract_claims_with_metadata(text: str) -> dict:
 
         for sent in line_doc.sents:
             line = _clean_line(sent.text)
+            line = _resolve_leading_pronoun(line, main_entity)
 
             if not line or len(line) < 25:
                 continue
@@ -90,8 +117,16 @@ def extract_claims_with_metadata(text: str) -> dict:
             else:
                 notes.append(f"Non-claim fragment ignored: '{claim}'")
 
+    seen = set()
+    filtered_claims = []
+
+    for claim in claims:
+        if claim not in seen:
+            filtered_claims.append(claim)
+            seen.add(claim)
+
     return {
-        "claims": claims,
+        "claims": filtered_claims,
         "typed_claims": typed_claims,
         "notes": notes,
     }
