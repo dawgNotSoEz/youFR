@@ -8,6 +8,7 @@ pnpm-debug.log*
 # Logs
 logs/
 *.log
+archive/logs/
 
 # OS generated files
 .DS_Store
@@ -17,6 +18,7 @@ Thumbs.db
 .env
 .env.*
 api_keys.env
+configs/api_keys.env
 # Build output
 dist/
 build/
