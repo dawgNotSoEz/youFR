@@ -8,14 +8,14 @@ if str(ROOT_DIR) not in sys.path:
 from services.llm_generator.generate import generate_answer, get_last_call_info
 from services.claim_extractor.extractor import extract_claims_with_metadata
 from services.verifier.groq_verifier import verify_claim, verify_claim_llm_only
-from services.aggregator.aggregate import aggregate_results
+from services.aggregator.aggregate import aggregate_results, fuse
 try:
     from services.retriever.wiki_retriever import get_evidence
 except Exception:
     from archive.services.retriever.wiki_retriever import get_evidence
 from services.classifier.failure_classifier import classify_failure
 from services.explainer.explain import generate_explanation
-from services.verifier.local_verifier import verify_local
+from services.verifier.evidence_filter import is_evidence_relevant
 
 
 def run_pipeline(query):
@@ -43,9 +43,50 @@ def run_pipeline(query):
 
     for claim in claims:
         llm_result = verify_claim_llm_only(claim)
-        evidence = get_evidence(claim)
-        evidence_result = verify_claim(claim, evidence=evidence)
-        local_result = verify_local(claim)
+        evidence_payload = get_evidence(claim)
+
+        if isinstance(evidence_payload, dict):
+            evidence = str(evidence_payload.get("evidence", ""))
+            evidence_sources = evidence_payload.get("sources", [])
+        else:
+            evidence = str(evidence_payload or "")
+            evidence_sources = []
+
+        if not is_evidence_relevant(claim, evidence):
+            evidence_result = {
+                "claim": claim,
+                "status": "UNCERTAIN",
+                "confidence": 0.0,
+                "reason": "Evidence filtered as irrelevant",
+            }
+        else:
+            evidence_result = verify_claim(claim, evidence=evidence)
+
+        fused_result = fuse(
+            {
+                "status": llm_result.get("status", "UNCERTAIN"),
+                "confidence": llm_result.get("confidence", 0.0),
+            },
+            {
+                "status": evidence_result.get("status", "UNCERTAIN"),
+                "confidence": evidence_result.get("confidence", 0.0),
+            },
+        )
+
+        print("\n--- CLAIM ---")
+        print(claim)
+
+        print("\nLLM VERDICT:")
+        print(llm_result)
+
+        print("\nEVIDENCE VERDICT:")
+        print(evidence_result)
+
+        print("\nEVIDENCE:")
+        print(evidence[:300])
+
+        print("\nFUSED RESULT:")
+        print(fused_result)
 
         fusion_claim = {
             "claim": claim,
@@ -57,10 +98,6 @@ def run_pipeline(query):
                 "status": evidence_result.get("status", "UNCERTAIN"),
                 "confidence": evidence_result.get("confidence", 0.0),
             },
-            "local": {
-                "status": local_result.get("status", "UNCERTAIN"),
-                "confidence": local_result.get("confidence", 0.0),
-            },
         }
         fusion_input.append(fusion_claim)
 
@@ -70,6 +107,8 @@ def run_pipeline(query):
                 "llm_verdict": llm_result,
                 "evidence_verdict": evidence_result,
                 "evidence": evidence,
+                "sources": evidence_sources,
+                "fused_result": fused_result,
             }
         )
 
@@ -123,17 +162,8 @@ if __name__ == "__main__":
     results = pipeline_output["results"]
 
     for r in results:
-        print("\n--- CLAIM ---")
-        print(r["claim"])
-
-        print("\nLLM VERDICT:")
-        print(r["llm_verdict"])
-
-        print("\nEVIDENCE VERDICT:")
-        print(r["evidence_verdict"])
-
-        print("\nEVIDENCE:")
-        print(r["evidence"])
+        print("\nSOURCES:")
+        print(r.get("sources", []))
 
     print("\n--- ERROR TYPE ---")
     print(pipeline_output["summary"]["error_type"])

@@ -32,10 +32,7 @@ def _clamp_confidence(value) -> float:
         confidence = float(value)
     except Exception:
         return 0.5
-    if confidence < 0:
-        return 0.0
-    if confidence > 1:
-        return 1.0
+    confidence = max(0.0, min(confidence, 1.0))
     return confidence
 
 

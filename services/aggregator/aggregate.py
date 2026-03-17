@@ -1,30 +1,30 @@
-def fuse_results(llm_result, evidence_result):
-    llm_status = str((llm_result or {}).get("status", "UNCERTAIN")).upper()
-    evidence_status = str((evidence_result or {}).get("status", "UNCERTAIN")).upper()
+def fuse(llm, evidence):
+    llm_status = str((llm or {}).get("status", "UNCERTAIN")).upper()
+    evidence_status = str((evidence or {}).get("status", "UNCERTAIN")).upper()
 
     try:
-        llm_confidence = float((llm_result or {}).get("confidence", 0.0))
+        llm_confidence = float((llm or {}).get("confidence", 0.0))
     except Exception:
         llm_confidence = 0.0
 
     try:
-        evidence_confidence = float((evidence_result or {}).get("confidence", 0.0))
+        evidence_confidence = float((evidence or {}).get("confidence", 0.0))
     except Exception:
         evidence_confidence = 0.0
 
     if llm_status == "FALSE" or evidence_status == "FALSE":
         return {
             "final_status": "FALSE",
-            "reason": "At least one verifier marked FALSE",
+            "reason": "One verifier FALSE",
         }
 
     if llm_status != evidence_status:
         return {
             "final_status": "UNCERTAIN",
-            "reason": "Disagreement between verifiers",
+            "reason": "Verifier disagreement",
         }
 
-    if min(llm_confidence, evidence_confidence) < 0.7:
+    if llm_confidence < 0.7 or evidence_confidence < 0.7:
         return {
             "final_status": "UNCERTAIN",
             "reason": "Low confidence",
@@ -32,8 +32,12 @@ def fuse_results(llm_result, evidence_result):
 
     return {
         "final_status": "TRUE",
-        "reason": "Both verifiers agree with high confidence",
+        "reason": "Agreement with high confidence",
     }
+
+
+def fuse_results(llm_result, evidence_result):
+    return fuse(llm_result, evidence_result)
 
 
 def aggregate_results(results: list[dict]) -> dict:
@@ -47,7 +51,7 @@ def aggregate_results(results: list[dict]) -> dict:
         llm_result = item.get("llm", {})
         evidence_result = item.get("evidence", {})
 
-        fused = fuse_results(llm_result, evidence_result)
+        fused = fuse(llm_result, evidence_result)
         fused_results.append(
             {
                 "claim": claim,
