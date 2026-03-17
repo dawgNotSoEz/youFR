@@ -16,6 +16,7 @@ except Exception:
 from services.classifier.failure_classifier import classify_failure
 from services.explainer.explain import generate_explanation
 from services.verifier.evidence_filter import is_evidence_relevant
+from services.embeddings.embedding_verifier import embedding_score
 
 
 def run_pipeline(query):
@@ -62,6 +63,8 @@ def run_pipeline(query):
         else:
             evidence_result = verify_claim(claim, evidence=evidence)
 
+        embed_result = embedding_score(claim, evidence)
+
         fused_result = fuse(
             {
                 "status": llm_result.get("status", "UNCERTAIN"),
@@ -71,6 +74,7 @@ def run_pipeline(query):
                 "status": evidence_result.get("status", "UNCERTAIN"),
                 "confidence": evidence_result.get("confidence", 0.0),
             },
+            embed_result,
         )
 
         print("\n--- CLAIM ---")
@@ -85,6 +89,9 @@ def run_pipeline(query):
         print("\nEVIDENCE:")
         print(evidence[:300])
 
+        print("\nEMBEDDING SCORE:")
+        print(embed_result)
+
         print("\nFUSED RESULT:")
         print(fused_result)
 
@@ -98,6 +105,7 @@ def run_pipeline(query):
                 "status": evidence_result.get("status", "UNCERTAIN"),
                 "confidence": evidence_result.get("confidence", 0.0),
             },
+            "embedding": embed_result,
         }
         fusion_input.append(fusion_claim)
 
@@ -106,6 +114,7 @@ def run_pipeline(query):
                 "claim": claim,
                 "llm_verdict": llm_result,
                 "evidence_verdict": evidence_result,
+                "embedding": embed_result,
                 "evidence": evidence,
                 "sources": evidence_sources,
                 "fused_result": fused_result,
@@ -118,6 +127,7 @@ def run_pipeline(query):
         print("\n[FUSION DEBUG] claim:", item["claim"])
         print("[FUSION DEBUG] llm status:", item["llm"].get("status", "UNCERTAIN"))
         print("[FUSION DEBUG] evidence status:", item["evidence"].get("status", "UNCERTAIN"))
+        print("[FUSION DEBUG] embedding score:", item.get("embedding", {}).get("score"))
         print("[FUSION DEBUG] fused result:", item["fused"])
 
     hallucination = aggregated["hallucination"]

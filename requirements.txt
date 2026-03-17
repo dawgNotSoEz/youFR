@@ -4,4 +4,5 @@ groq==1.1.1
 requests==2.32.3
 urllib3==2.2.3
 wikipedia==1.4.0
+sentence-transformers==3.2.1
 en-core-web-sm==3.8.0
