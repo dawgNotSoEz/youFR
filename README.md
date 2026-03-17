@@ -8,6 +8,16 @@ A small fact-checking pipeline with this stack:
   - V2: strict evidence-grounded verifier
 - **Decisioning:** Aggregator + Detector + Failure Classifier + Explainer
 
+## Project Progress So Far
+
+- Visual dashboard: [progress_graph.md](progress_graph.md)
+- Historical runs analyzed: 14
+- Total claims evaluated: 23
+- Outcomes: 9 TRUE, 7 FALSE, 7 UNCERTAIN
+- Hallucination-flagged runs: 6/14 (42.86%)
+
+Use the dashboard file to see the pie/bar charts for claim outcomes, hallucination rate, and error-type mix.
+
 ## 1) Prerequisites
 
 - Python 3.11+
