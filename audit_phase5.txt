@@ -1,0 +1,100 @@
+Phase 5 Embedding Verifier Audit
+Date: 2026-03-18
+
+1) Embedding scores (examples)
+
+Dependency
+- Installed: sentence-transformers==3.2.1
+
+Implemented module
+- File: services/embeddings/embedding_verifier.py
+- Model: all-MiniLM-L6-v2
+- Output:
+  {
+    "score": <cosine similarity>,
+    "status": "LOW" (<0.5) | "HIGH" (>=0.5)
+  }
+
+Validation examples
+- Correct/related:
+  - Claim: "Einstein developed relativity"
+  - Evidence: "Albert Einstein developed the theory of relativity..."
+  - Score: 0.7754 (HIGH)
+
+- Incorrect-but-topically-related:
+  - Claim: "Humans have 3 lungs"
+  - Evidence: "Humans have two lungs..."
+  - Score: 0.7934 (HIGH)
+  - Note: semantic similarity captures topical closeness, not factual truth polarity.
+
+- Mixed/partially related:
+  - Claim: "Einstein contributed to modern physics"
+  - Evidence: "Einstein worked on relativity, while quantum mechanics..."
+  - Score: 0.6573 (HIGH)
+
+- Unrelated (control):
+  - Claim: "Einstein developed relativity"
+  - Evidence: "Humans have two lungs and one heart..."
+  - Score: -0.0519 (LOW)
+
+
+2) Before vs After fusion behavior
+
+Before embedding signal (Phase 4)
+- Fusion used only:
+  - LLM status/confidence
+  - Evidence status/confidence
+- If both verifiers returned TRUE with high confidence, result could become TRUE even when claim/evidence semantic alignment was poor.
+
+After embedding signal (Phase 5)
+- Fusion now uses:
+  - LLM verifier
+  - Evidence verifier
+  - Embedding similarity threshold (score < 0.5 -> UNCERTAIN)
+- Updated decision path in services/aggregator/aggregate.py:
+  - FALSE if either verifier FALSE
+  - UNCERTAIN on verifier disagreement
+  - UNCERTAIN on low semantic similarity
+  - UNCERTAIN on low confidence
+  - TRUE only when all signals agree
+
+
+3) Cases where embeddings prevented false TRUE
+
+Direct prevention case (controlled validation)
+- Inputs to fusion:
+  - llm = {"status":"TRUE", "confidence":0.95}
+  - evidence = {"status":"TRUE", "confidence":0.92}
+  - embedding = {"score": -0.0519, "status":"LOW"}
+- Output:
+  - {"final_status":"UNCERTAIN", "reason":"Low semantic similarity"}
+- Outcome:
+  - Embedding signal blocked a potential blind TRUE.
+
+
+4) System improvement summary
+
+What was added
+- Dependency: sentence-transformers
+- Embedding verifier integrated in pipeline per claim
+- Debug output added for embedding result
+- Fusion upgraded to include semantic similarity gating
+
+Pipeline integration details
+- Added import in pipeline/main_pipeline.py:
+  from services.embeddings.embedding_verifier import embedding_score
+- Per claim:
+  embed_result = embedding_score(claim, evidence)
+- Added to result payload:
+  "embedding": embed_result
+- Added debug prints:
+  print("\nEMBEDDING SCORE:")
+  print(embed_result)
+
+Observed end-to-end behavior
+- Hard false claims remained FALSE in batch testing (no blind TRUE outputs).
+- Embedding signal now contributes a non-LLM semantic guardrail.
+
+Notes
+- For contradiction-style pairs with shared topic words, cosine similarity may remain high; this is expected for sentence embeddings and does not replace factual verification.
+- The embedding signal is now an additional decision axis, not a standalone truth detector.
