@@ -1,0 +1,98 @@
+=== AI HALLUCINATION SYSTEM AUDIT REPORT ===
+
+[VALID COMPONENTS]
+* configs/api_keys.env
+* pipeline/main_pipeline.py
+* services/llm_generator/client.py
+* services/llm_generator/generate.py
+* services/llm_generator/fallback.py
+* services/claim_extractor/extractor.py
+* services/verifier/groq_verifier.py
+* services/aggregator/aggregate.py
+* services/detector/hallucination.py
+* services/classifier/failure_classifier.py
+* services/explainer/explain.py
+* models/schemas.py
+* README.md (optional, retained)
+
+[ARCHIVED COMPONENTS]
+* services/retriever -> archive/services/retriever
+* services/hallucination_detector -> archive/services/hallucination_detector
+* models/embeddings -> archive/models/embeddings
+* models/reranker -> archive/models/reranker
+* tests -> archive/tests
+* logs -> archive/logs
+* services/__init__.py -> archive/services/__init__.py
+* services/aggregator/__init__.py -> archive/services/aggregator/__init__.py
+* services/claim_extractor/__init__.py -> archive/services/claim_extractor/__init__.py
+* services/classifier/__init__.py -> archive/services/classifier/__init__.py
+* services/detector/__init__.py -> archive/services/detector/__init__.py
+* services/explainer/__init__.py -> archive/services/explainer/__init__.py
+* services/llm_generator/__init__.py -> archive/services/llm_generator/__init__.py
+* services/verifier/__init__.py -> archive/services/verifier/__init__.py
+* models/__init__.py -> archive/models/__init__.py
+* models/__pycache__ -> archive/models/__pycache__
+* pipeline/__pycache__ -> archive/pipeline/__pycache__
+* services/__pycache__ -> archive/services/__pycache__
+* services/aggregator/__pycache__ -> archive/services/aggregator/__pycache__
+* services/claim_extractor/__pycache__ -> archive/services/claim_extractor/__pycache__
+* services/classifier/__pycache__ -> archive/services/classifier/__pycache__
+* services/detector/__pycache__ -> archive/services/detector/__pycache__
+* services/explainer/__pycache__ -> archive/services/explainer/__pycache__
+* services/llm_generator/__pycache__ -> archive/services/llm_generator/__pycache__
+* services/verifier/__pycache__ -> archive/services/verifier/__pycache__
+
+[STRUCTURE ISSUES FIXED]
+* Removed active Phase-3 evidence dependency from verifier by dropping import/use of services/retriever in active runtime.
+* Removed active run-log writer from pipeline to keep active runtime constrained to Phase 1+2.
+* Removed Phase-3 dependency from active requirements (wikipedia package).
+* Updated README to Phase 1+2-only description and entry points.
+* Archived all forbidden and duplicate modules and caches under archive/<original_path>/.
+* Preserved all archived files (no permanent deletion).
+* Verified active pipeline still runs after restructuring.
+
+[FINAL STRUCTURE]
+AI-HALL/
+│
+├── configs/
+│   └── api_keys.env
+│
+├── pipeline/
+│   └── main_pipeline.py
+│
+├── services/
+│   ├── llm_generator/
+│   │   ├── client.py
+│   │   ├── generate.py
+│   │   └── fallback.py
+│   │
+│   ├── claim_extractor/
+│   │   └── extractor.py
+│   │
+│   ├── verifier/
+│   │   └── groq_verifier.py
+│   │
+│   ├── aggregator/
+│   │   └── aggregate.py
+│   │
+│   ├── detector/
+│   │   └── hallucination.py
+│   │
+│   ├── classifier/
+│   │   └── failure_classifier.py
+│   │
+│   └── explainer/
+│       └── explain.py
+│
+├── models/
+│   └── schemas.py
+│
+├── README.md
+├── archive/
+├── requirements.txt
+└── audit_report.txt
+
+[STATUS]
+* Phase 1: COMPLETE
+* Phase 2: COMPLETE
+* Ready for Phase 3: YES
