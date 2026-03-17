@@ -1,5 +1,4 @@
 import sys
-import json
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
@@ -12,24 +11,6 @@ from services.verifier.groq_verifier import verify_claim
 from services.detector.hallucination import detect_hallucination
 from services.classifier.failure_classifier import classify_failure
 from services.explainer.explain import generate_explanation
-
-
-def _append_run_log(entry: dict) -> None:
-    log_path = ROOT_DIR / "logs" / "run_log.json"
-    log_path.parent.mkdir(parents=True, exist_ok=True)
-
-    if not log_path.exists():
-        log_path.write_text("[]", encoding="utf-8")
-
-    try:
-        existing = json.loads(log_path.read_text(encoding="utf-8"))
-        if not isinstance(existing, list):
-            existing = []
-    except Exception:
-        existing = []
-
-    existing.append(entry)
-    log_path.write_text(json.dumps(existing, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
 def run_pipeline(query):
@@ -83,16 +64,6 @@ def run_pipeline(query):
         "results": results,
         "summary": final_summary,
     }
-
-    _append_run_log(
-        {
-            "query": query,
-            "answer": answer,
-            "claims": claims,
-            "results": results,
-            "final": final_summary,
-        }
-    )
 
     return output
 

@@ -2,11 +2,9 @@
 
 A small fact-checking pipeline with this stack:
 - **Answer generation:** MegaLLM API (cloud)
-- **Claim extraction:** spaCy sentence extraction + simple pronoun/entity resolution
-- **Evidence retrieval:** Wikipedia summaries per claim
-- **Verification:** Groq `llama-3.1-8b-instant` with claim + evidence
+- **Claim extraction:** atomic claim extraction
+- **Verification:** Groq `llama-3.1-8b-instant`
 - **Decisioning:** Aggregator + Detector + Failure Classifier + Explainer
-- **Observability:** JSON run logs + batch test runner
 
 ## 1) Prerequisites
 
@@ -113,34 +111,7 @@ Decision rules:
 - low-confidence (`confidence < 0.7`) claims > 50% => hallucination `True`
 - Otherwise => hallucination `False`
 
-## 7) Logging and batch evaluation
-
-### Run log
-Each pipeline run appends to:
-
-`logs/run_log.json`
-
-Stored fields:
-- `query`
-- `answer`
-- `claims`
-- `results`
-- `final`
-
-### Batch testing
-Test queries are in:
-
-`tests/test_cases.json`
-
-Run batch evaluation:
-
-```powershell
-c:/Users/param/Documents/Code/ai-hall/.venv/Scripts/python.exe c:/Users/param/Documents/Code/ai-hall/tests/run_batch.py
-```
-
-Batch output includes total cases, matches, and accuracy.
-
-## 8) Troubleshooting
+## 7) Troubleshooting
 
 ### MegaLLM TLS / SSL handshake failure
 If you see `SSLEOFError` or `MegaLLM TLS handshake failed`:
@@ -162,20 +133,16 @@ If Mega returns model unavailable errors:
 1. Keep `MEGA_MODELS` set to working models in `configs/api_keys.env`.
 2. If needed, test available models quickly via the Mega models endpoint.
 
-## 9) Project entry points
+## 8) Project entry points
 
 - `pipeline/main_pipeline.py` — main orchestration
 - `services/llm_generator/generate.py` — MegaLLM generation
 - `services/llm_generator/client.py` — MegaLLM HTTP client
 - `services/llm_generator/fallback.py` — model fallback helpers
 - `services/claim_extractor/extractor.py` — claim extraction
-- `services/retriever/wiki_retriever.py` — evidence retrieval from Wikipedia
 - `services/verifier/groq_verifier.py` — Groq verification
 - `services/aggregator/aggregate.py` — scoring aggregation logic
 - `services/detector/hallucination.py` — detector wrapper
 - `services/classifier/failure_classifier.py` — failure type classifier
 - `services/explainer/explain.py` — error explainer
 - `models/schemas.py` — shared structured schema(s)
-- `logs/run_log.json` — persisted run history
-- `tests/test_cases.json` — batch test inputs
-- `tests/run_batch.py` — batch runner and accuracy report

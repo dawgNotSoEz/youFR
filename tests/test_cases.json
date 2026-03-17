@@ -1,5 +1,0 @@
-[
-  {"query": "Who invented relativity?", "expected_hallucination": false},
-  {"query": "Who discovered gravity?", "expected_hallucination": false},
-  {"query": "What is the capital of France?", "expected_hallucination": false}
-]
