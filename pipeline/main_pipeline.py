@@ -17,6 +17,7 @@ from services.verifier.memory_consistency import (
 )
 from services.corrector.correct import correct_answer
 from services.aggregator.aggregate import aggregate_results, fuse
+from services.memory.memory_store import memory_db, store_verified_claims
 try:
     from services.retriever.wiki_retriever import get_evidence
 except Exception:
@@ -282,6 +283,16 @@ def run_pipeline(query, max_attempts: int = MAX_ATTEMPTS):
         evaluation = _evaluate_answer(query=query, answer=answer, verified_facts=verified_facts)
         last_evaluation = evaluation
 
+        evaluated_claims = [item.get("claim", "") for item in evaluation.get("results", []) if item.get("claim")]
+        fused_results = [
+            {"final_status": item.get("fused_result", {}).get("final_status", "UNCERTAIN")}
+            for item in evaluation.get("results", [])
+        ]
+        store_verified_claims(evaluated_claims, fused_results)
+
+        print("\n[MEMORY]")
+        print(memory_db[-5:])
+
         failed_claims = evaluation.get("failed_claims", [])
         print("\n[CORRECTION LOOP]")
         print("Attempt:", attempts)
@@ -319,13 +330,22 @@ def run_pipeline(query, max_attempts: int = MAX_ATTEMPTS):
     blocked_summary["final_status"] = "FALSE"
     blocked_summary["hard_gate_passed"] = False
 
+    final_statuses = [
+        item.get("fused_result", {}).get("final_status", "UNCERTAIN")
+        for item in (last_evaluation or {}).get("results", [])
+    ]
+    if "UNCERTAIN" in final_statuses:
+        print("⚠️ returning best corrected answer (safe fallback)")
+
+    safe_fallback_answer = (answer or "").strip() or (original_answer or "").strip()
+
     return {
         "attempts_used": attempts,
         "max_attempts": max_attempts,
         "correction_count": correction_count,
         "original_answer": original_answer,
-        "final_answer": None,
-        "last_corrected_answer": answer,
+        "final_answer": safe_fallback_answer,
+        "last_corrected_answer": safe_fallback_answer,
         "results": (last_evaluation or {}).get("results", []),
         "summary": blocked_summary,
     }

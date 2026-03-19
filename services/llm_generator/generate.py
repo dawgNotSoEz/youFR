@@ -9,6 +9,7 @@ from requests.exceptions import RequestException, SSLError
 
 from services.llm_generator.client import MegaLLMClient
 from services.llm_generator.fallback import is_model_unavailable_error, pick_models
+from services.memory.memory_store import get_memory_context
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -108,6 +109,22 @@ def _query_megallm(query: str, model: str, api_key: str, timeout_seconds: int = 
 
 
 def generate_answer(query: str, max_retries: int = 3) -> str:
+    memory_context = get_memory_context(query)
+    prompt = f"""
+You are a factual AI.
+
+Use ONLY verified facts.
+Write concise but complete declarative factual sentences.
+When dates are relevant, include the year explicitly.
+If the question uses pronouns (he/she/it/they), resolve them from Memory when possible.
+
+Memory:
+{memory_context}
+
+Question:
+{query}
+""".strip()
+
     api_keys = _available_api_keys()
     if not api_keys:
         raise RuntimeError("No MegaLLM API keys found. Set MEGA_API_KEY (and optional MEGA_FALLBACK_API_KEY) in configs/api_keys.env")
@@ -131,7 +148,7 @@ def generate_answer(query: str, max_retries: int = 3) -> str:
             tried_models.append(model)
             for attempt in range(1, max_retries + 1):
                 try:
-                    return _query_megallm(query, model=model, api_key=api_key)
+                    return _query_megallm(prompt, model=model, api_key=api_key)
                 except Exception as exc:
                     last_error = exc
                     if is_model_unavailable_error(exc):

@@ -1,7 +1,7 @@
-def fuse(llm, evidence, embedding, local=None):
+def fuse(llm, evidence, embedding, local):
     llm_status = str((llm or {}).get("status", "UNCERTAIN")).upper()
     evidence_status = str((evidence or {}).get("status", "UNCERTAIN")).upper()
-    local_status = str((local or {}).get("status", "UNCERTAIN")).upper() if local is not None else "UNCERTAIN"
+    local_status = str((local or {}).get("status", "UNCERTAIN")).upper()
 
     try:
         llm_confidence = float((llm or {}).get("confidence", 0.0))
@@ -14,53 +14,38 @@ def fuse(llm, evidence, embedding, local=None):
         evidence_confidence = 0.0
 
     try:
-        local_confidence = float((local or {}).get("confidence", 0.0)) if local is not None else 0.0
-    except Exception:
-        local_confidence = 0.0
-
-    try:
         embedding_score = float((embedding or {}).get("score", 0.0))
     except Exception:
         embedding_score = 0.0
 
     if llm_status == "FALSE" or evidence_status == "FALSE" or local_status == "FALSE":
-        return {
-            "final_status": "FALSE",
-            "reason": "One verifier FALSE",
-        }
+        return {"final_status": "FALSE", "reason": "One verifier FALSE"}
 
-    if local is None:
-        if llm_status != evidence_status:
-            return {
-                "final_status": "UNCERTAIN",
-                "reason": "Verifier disagreement",
-            }
-    elif not (llm_status == evidence_status == local_status):
-        return {
-            "final_status": "UNCERTAIN",
-            "reason": "Verifier disagreement",
-        }
+    local_active = local_status != "UNCERTAIN"
+    _ = local_active
 
-    if embedding_score < 0.5:
-        return {
-            "final_status": "UNCERTAIN",
-            "reason": "Low semantic similarity",
-        }
+    if (
+        llm_status == "TRUE"
+        and evidence_status == "TRUE"
+        and llm_confidence >= 0.7
+        and evidence_confidence >= 0.7
+        and embedding_score >= 0.5
+    ):
+        return {"final_status": "TRUE", "reason": "Strong consensus (LLM + Evidence)"}
 
-    if llm_confidence < 0.7 or evidence_confidence < 0.7 or (local is not None and local_confidence < 0.7):
-        return {
-            "final_status": "UNCERTAIN",
-            "reason": "Low confidence",
-        }
+    if llm_status == evidence_status:
+        return {"final_status": "UNCERTAIN", "reason": "Weak agreement"}
 
-    return {
-        "final_status": "TRUE",
-        "reason": "All verifiers agree",
-    }
+    return {"final_status": "UNCERTAIN", "reason": "Insufficient agreement"}
 
 
 def fuse_results(llm_result, evidence_result, embedding_result=None):
-    return fuse(llm_result, evidence_result, embedding_result or {"score": 1.0})
+    return fuse(
+        llm_result,
+        evidence_result,
+        embedding_result or {"score": 1.0},
+        {"status": "UNCERTAIN", "confidence": 0.0},
+    )
 
 
 def aggregate_results(results: list[dict]) -> dict:
@@ -73,7 +58,7 @@ def aggregate_results(results: list[dict]) -> dict:
         claim = item.get("claim", "")
         llm_result = item.get("llm", {})
         evidence_result = item.get("evidence", {})
-        local_result = item.get("local")
+        local_result = item.get("local") or {"status": "UNCERTAIN", "confidence": 0.0}
         embedding_result = item.get("embedding", {"score": 1.0})
 
         fused = fuse(llm_result, evidence_result, embedding_result, local_result)
