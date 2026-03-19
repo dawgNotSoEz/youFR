@@ -1,41 +1,84 @@
 import requests
 import json
 
-def verify_local(claim: str):
+OLLAMA_URL = "http://localhost:11434/api/generate"
+MODEL = "phi3"
 
-    prompt = f"""Verify the following claim.
 
-Respond ONLY in JSON:
-{{
-  "status": "TRUE | FALSE | UNCERTAIN",
-  "confidence": 0 to 1,
-  "reason": "short explanation"
-}}
+def _normalize_status(value: str) -> str:
+    upper = (value or "").strip().upper()
+    if upper in {"TRUE", "FALSE", "UNCERTAIN"}:
+        return upper
+    return "UNCERTAIN"
+
+
+def _clamp_confidence(value) -> float:
+    try:
+        confidence = float(value)
+    except Exception:
+        return 0.0
+    return max(0.0, min(confidence, 1.0))
+
+def verify_locally(claim: str):
+
+    prompt = f"""
+You are a strict factual verifier.
+
+Rules:
+- Return ONLY JSON
+- No explanation outside JSON
+- Be conservative
+
+Task:
+Verify the claim.
 
 Claim: {claim}
+
+Output format:
+{{
+  "status": "TRUE" or "FALSE" or "UNCERTAIN",
+  "confidence": float (0 to 1),
+  "reason": "short reason"
+}}
 """
 
-    response = requests.post(
-        "http://localhost:11434/api/generate",
-        json={
-            "model": "phi3",
-            "prompt": prompt,
-            "stream": False
+    try:
+        response = requests.post(
+            OLLAMA_URL,
+            json={
+                "model": MODEL,
+                "prompt": prompt,
+                "stream": False
+            },
+            timeout=20,
+        )
+        response.raise_for_status()
+        text = response.json().get("response", "")
+    except Exception:
+        return {
+            "status": "UNCERTAIN",
+            "confidence": 0.0,
+            "reason": "Local verifier unavailable",
         }
-    )
-
-    text = response.json()["response"]
 
     # Try parsing JSON
     try:
         start = text.find("{")
         end = text.rfind("}") + 1
         parsed = json.loads(text[start:end])
-        return parsed
-    except:
+        return {
+            "status": _normalize_status(parsed.get("status", "UNCERTAIN")),
+            "confidence": _clamp_confidence(parsed.get("confidence", 0.0)),
+            "reason": str(parsed.get("reason", "no reason provided")).strip() or "no reason provided",
+        }
+    except Exception:
         return {
             "status": "UNCERTAIN",
             "confidence": 0.0,
             "reason": "Parsing failed",
             "raw": text
         }
+
+
+def verify_local(claim: str):
+    return verify_locally(claim)
