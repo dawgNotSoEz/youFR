@@ -1,0 +1,148 @@
+[
+  {
+    "query": "Einstein developed relativity",
+    "attempts_used": 1,
+    "final_answer_returned": false,
+    "summary": {
+      "hallucination": true,
+      "reason": "Hard gate blocked output after 1 attempts; no fully TRUE verification achieved",
+      "notes": [
+        "Non-claim fragment ignored: 'Special relativity (1905): based on the constancy of the speed of light and the relativity principle.'",
+        "Non-claim fragment ignored: 'General relativity (1915): gravity as spacetime curvature described by Einstein’s field equations.'",
+        "Non-claim fragment ignored: 'Predicts gravitational time dilation, light bending, perihelion precession, black holes, and gravitational waves.'",
+        "Non-claim fragment ignored: 'Would you like a brief timeline, a conceptual overview, or the math basics?'"
+      ],
+      "error_type": "FACTUAL_ERROR",
+      "explanation": "The model produced incorrect factual information.",
+      "final_status": "FALSE",
+      "hard_gate_passed": false,
+      "metrics": {
+        "total_claims": 4,
+        "false_count": 1,
+        "uncertain_count": 3,
+        "uncertain_ratio": 0.75
+      }
+    },
+    "claims": [
+      {
+        "claim": "Albert Einstein formulated:.",
+        "llm_status": "UNCERTAIN",
+        "evidence_status": "FALSE",
+        "local_status": "UNCERTAIN",
+        "local_reason": "Local verifier unavailable",
+        "fused_status": "FALSE",
+        "fused_reason": "One verifier FALSE"
+      },
+      {
+        "claim": "Consequences include time dilation, length contraction, simultaneity relativity, and E=mc².",
+        "llm_status": "TRUE",
+        "evidence_status": "UNCERTAIN",
+        "local_status": "UNCERTAIN",
+        "local_reason": "Local verifier unavailable",
+        "fused_status": "UNCERTAIN",
+        "fused_reason": "Verifier disagreement"
+      },
+      {
+        "claim": "Albert Einstein built on key prior work (Lorentz transformations; ideas by Lorentz and Poincaré; Minkowski’s spacetime; Riemannian geometry; parallel developments by Hilbert), and many others extended the theory afterward.",
+        "llm_status": "TRUE",
+        "evidence_status": "TRUE",
+        "local_status": "UNCERTAIN",
+        "local_reason": "Local verifier unavailable",
+        "fused_status": "UNCERTAIN",
+        "fused_reason": "Verifier disagreement"
+      },
+      {
+        "claim": "Confirmations include the 1919 eclipse light-bending test, GPS time corrections, the Pound–Rebka experiment, and LIGO’s detection of gravitational waves.",
+        "llm_status": "TRUE",
+        "evidence_status": "TRUE",
+        "local_status": "UNCERTAIN",
+        "local_reason": "Local verifier unavailable",
+        "fused_status": "UNCERTAIN",
+        "fused_reason": "Verifier disagreement"
+      }
+    ]
+  },
+  {
+    "query": "Humans have 3 lungs",
+    "attempts_used": 1,
+    "final_answer_returned": false,
+    "summary": {
+      "hallucination": true,
+      "reason": "Hard gate blocked output after 1 attempts; no fully TRUE verification achieved",
+      "notes": [
+        "Non-claim fragment ignored: 'Right lung: 3 lobes (upper, middle, lower).'",
+        "Non-claim fragment ignored: 'Left lung: 2 lobes (upper, lower), with a cardiac notch to make room for the heart.'"
+      ],
+      "error_type": "UNVERIFIABLE",
+      "explanation": "The claims could not be verified with confidence.",
+      "final_status": "FALSE",
+      "hard_gate_passed": false,
+      "metrics": {
+        "total_claims": 3,
+        "false_count": 0,
+        "uncertain_count": 3,
+        "uncertain_ratio": 1.0
+      }
+    },
+    "claims": [
+      {
+        "claim": "Not quite—humans have two lungs, not three.",
+        "llm_status": "TRUE",
+        "evidence_status": "TRUE",
+        "local_status": "UNCERTAIN",
+        "local_reason": "Local verifier unavailable",
+        "fused_status": "UNCERTAIN",
+        "fused_reason": "Verifier disagreement"
+      },
+      {
+        "claim": "People sometimes confuse the right lung’s three lobes with “three lungs.”.",
+        "llm_status": "TRUE",
+        "evidence_status": "UNCERTAIN",
+        "local_status": "UNCERTAIN",
+        "local_reason": "Local verifier unavailable",
+        "fused_status": "UNCERTAIN",
+        "fused_reason": "Verifier disagreement"
+      },
+      {
+        "claim": "Very rare congenital anomalies can create an accessory (extra) lobe, but not a normal third lung.",
+        "llm_status": "TRUE",
+        "evidence_status": "TRUE",
+        "local_status": "UNCERTAIN",
+        "local_reason": "Local verifier unavailable",
+        "fused_status": "UNCERTAIN",
+        "fused_reason": "Verifier disagreement"
+      }
+    ]
+  },
+  {
+    "query": "2 + 2 = 5",
+    "attempts_used": 1,
+    "final_answer_returned": false,
+    "summary": {
+      "hallucination": true,
+      "reason": "Hard gate blocked output after 1 attempts; no fully TRUE verification achieved",
+      "notes": [],
+      "error_type": "UNVERIFIABLE",
+      "explanation": "The claims could not be verified with confidence.",
+      "final_status": "FALSE",
+      "hard_gate_passed": false,
+      "metrics": {
+        "total_claims": 1,
+        "false_count": 0,
+        "uncertain_count": 1,
+        "uncertain_ratio": 1.0
+      }
+    },
+    "claims": [
+      {
+        "claim": "If you had a special context in mind (e.g., a joke, modular arithmetic, or a base system), let me know.",
+        "llm_status": "UNCERTAIN",
+        "evidence_status": "UNCERTAIN",
+        "local_status": "UNCERTAIN",
+        "local_reason": "Local verifier unavailable",
+        "fused_status": "UNCERTAIN",
+        "fused_reason": "Low semantic similarity"
+      }
+    ]
+  }
+]

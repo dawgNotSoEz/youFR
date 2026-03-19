@@ -1,0 +1,17 @@
+{
+  "true_sample": {
+    "status": "TRUE",
+    "confidence": 0.91,
+    "reason": "Factually correct"
+  },
+  "false_sample": {
+    "status": "FALSE",
+    "confidence": 0.96,
+    "reason": "Contradicted by arithmetic"
+  },
+  "uncertain_unavailable_sample": {
+    "status": "UNCERTAIN",
+    "confidence": 0.0,
+    "reason": "Local verifier unavailable"
+  }
+}

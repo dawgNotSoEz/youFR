@@ -3,9 +3,13 @@
 A small fact-checking pipeline with this stack:
 - **Answer generation:** MegaLLM API (cloud)
 - **Claim extraction:** atomic claim extraction
-- **Verification (V1 + V2):** Groq `llama-3.1-8b-instant`
+- **Verification (multi):**
   - V1: LLM-only verifier
   - V2: strict evidence-grounded verifier
+- **Independent local verifier:** Phi-3 (Ollama local endpoint)
+- **Memory consistency:** persistent `memory/verified_facts.json` contradiction checks
+- **Correction loop:** auto-correct + re-verify (max attempts: 2)
+- **Hard gate:** final answer is returned only when every fused claim is `TRUE`
 - **Decisioning:** Aggregator + Detector + Failure Classifier + Explainer
 
 ## Project Progress So Far
@@ -25,6 +29,9 @@ Use the dashboard file to see the pie/bar charts for claim outcomes, hallucinati
 - Internet access to:
   - `https://ai.megallm.io`
   - `https://api.groq.com`
+- Local Phi-3 runtime for independent verification:
+  - Ollama running at `http://localhost:11434`
+  - `phi3` model available locally
 
 ## 2) Setup
 
@@ -123,6 +130,16 @@ Decision rules:
 - `UNCERTAIN` claims > 50% => hallucination `True`
 - Otherwise => hallucination `False`
 
+Hard-gate rules:
+- If any fused claim is not `TRUE`, output is blocked from final return.
+- Pipeline runs correction + re-verification for up to 2 attempts.
+- If attempts are exhausted, `final_answer` is `None` and only `last_corrected_answer` is retained for diagnostics.
+
+Memory consistency rules:
+- Verified claims are persisted in `memory/verified_facts.json` after a fully `TRUE` run.
+- New claims are checked against previous verified facts before verification.
+- If contradiction is detected, the claim is marked `FALSE` immediately.
+
 ## 7) Troubleshooting
 
 ### MegaLLM TLS / SSL handshake failure
@@ -153,6 +170,8 @@ If Mega returns model unavailable errors:
 - `services/llm_generator/fallback.py` — model fallback helpers
 - `services/claim_extractor/extractor.py` — claim extraction
 - `services/verifier/groq_verifier.py` — Groq verification
+- `services/verifier/local_verifier.py` — local Phi-3 verification
+- `services/verifier/memory_consistency.py` — verified-fact storage and contradiction checks
 - `services/aggregator/aggregate.py` — scoring aggregation logic
 - `services/detector/hallucination.py` — detector wrapper
 - `services/classifier/failure_classifier.py` — failure type classifier
