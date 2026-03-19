@@ -1,0 +1,87 @@
+PHASE 7 AUDIT — HARD GATING + CORRECTION LOOP (CORE CONTROL LAYER)
+Date: 2026-03-19
+
+Objective Enforced
+- Only fully verified TRUE answers can be returned as final output.
+- If verification is not fully TRUE, pipeline auto-corrects and re-verifies.
+- Max correction attempts: 2.
+- If still not fully TRUE, original answer is never returned as final output.
+
+Implementation Summary
+1) Correction Engine
+- File: services/corrector/correct.py
+- Method: correct_answer(query, answer, failed_claims, evidence_map)
+- Provider path: MegaLLM via existing client helper call_llm()
+
+2) Pipeline Loop + Hard Gating
+- File: pipeline/main_pipeline.py
+- Flow:
+  - generate initial answer once
+  - verify claims
+  - if all fused final_status == TRUE => return final_answer
+  - else correct_answer(...) and retry (up to 2 corrections)
+- Hard gate behavior:
+  - final_answer is returned only when summary.final_status == TRUE
+  - otherwise final_answer is None
+  - last_corrected_answer is returned for diagnostics/fallback handling
+
+3) Debug Output Added
+- [CORRECTION LOOP]
+- Attempt: <number>
+- Failed claims: <list>
+
+Validation Executed
+- Command: python pipeline/main_pipeline.py
+- Additional phase-7 query suite executed and saved to audit_phase7_results.json
+
+Test Cases (Requested)
+
+A) Query: Who won Nobel Prize for relativity?
+- Before (original_answer):
+  "No one received a Nobel Prize specifically “for relativity.” Albert Einstein won the 1921 Nobel Prize in Physics for his explanation of the photoelectric effect, not for relativity..."
+- After correction loop (last_corrected_answer):
+  "No one. Albert Einstein’s 1921 Nobel Prize in Physics was for the photoelectric effect, not for relativity."
+- Corrections: 2
+- Final gate result: BLOCKED (final_answer = None)
+- Notes: answer content improved and matches expected factual direction.
+
+B) Query: 2 + 2 = 5 right?
+- Before (original_answer):
+  "No—under standard arithmetic, 2 + 2 = 4..."
+- After correction loop (last_corrected_answer):
+  "No—under standard arithmetic, 2 + 2 = 4."
+- Corrections: 2
+- Final gate result: BLOCKED (final_answer = None)
+- Notes: corrected answer exactly aligns with expected truth statement.
+
+C) Query: Einstein won Nobel Prize for relativity and developed relativity
+- Before (original_answer):
+  mixed response with correction + detailed explanation
+- After correction loop (last_corrected_answer):
+  "Einstein did not win the Nobel Prize for relativity; he received the 1921 Nobel Prize in Physics for explaining the photoelectric effect... He did develop relativity..."
+- Corrections: 2
+- Final gate result: BLOCKED (final_answer = None)
+- Notes: corrected answer aligns with expected mixed-truth correction.
+
+Before vs After Overview
+- All three queries show stricter, shorter corrected answers after loop.
+- No query returned the original draft answer once correction path was triggered.
+- last_corrected_answer was always the post-correction version (never original).
+
+Cases Fixed Successfully
+- Content-level fix success: 3/3 (all corrected answers move toward expected factual outputs).
+- Gate-pass success: 0/3 in this environment (no final_answer returned).
+
+Failure Cases
+- 3/3 remained blocked by hard gate after max attempts.
+- Root cause in current environment: strict multi-verifier agreement requirement with local verifier currently unavailable (returns UNCERTAIN), which drives disagreement/uncertainty and prevents TRUE final_status.
+
+Safety Outcome
+- Hallucination containment: ENABLED.
+- Unverified output leakage: BLOCKED by hard gate.
+- Original wrong answer returned after failures: NO.
+
+Conclusion
+- Core control layer is active: Detect -> Fix -> Re-verify -> Gate.
+- Hard gating rule is enforced: if final_status != TRUE, no final answer is returned.
+- Correction loop executes up to 2 attempts and preserves the latest corrected fallback separately.

@@ -1,0 +1,66 @@
+[
+  {
+    "query": "Who developed relativity?",
+    "final_answer": "Albert Einstein.",
+    "summary": {
+      "hallucination": true,
+      "reason": "Hard gate blocked output after 2 attempts; no fully TRUE verification achieved",
+      "notes": [],
+      "error_type": "INSUFFICIENT_EVIDENCE",
+      "explanation": "No claims were extracted for verification, so the answer cannot be returned.",
+      "final_status": "FALSE",
+      "hard_gate_passed": false,
+      "metrics": {
+        "total_claims": 0,
+        "false_count": 0,
+        "uncertain_count": 0,
+        "uncertain_ratio": 0.0
+      }
+    },
+    "memory_tail": []
+  },
+  {
+    "query": "When did he do it?",
+    "final_answer": "I’m missing context. Who is “he,” and what action or event are you referring to?",
+    "summary": {
+      "hallucination": true,
+      "reason": "Hard gate blocked output after 2 attempts; no fully TRUE verification achieved",
+      "notes": [
+        "Non-claim fragment ignored: 'Who is “he,” and what action or event are you referring to?'"
+      ],
+      "error_type": "INSUFFICIENT_EVIDENCE",
+      "explanation": "No claims were extracted for verification, so the answer cannot be returned.",
+      "final_status": "FALSE",
+      "hard_gate_passed": false,
+      "metrics": {
+        "total_claims": 0,
+        "false_count": 0,
+        "uncertain_count": 0,
+        "uncertain_ratio": 0.0
+      }
+    },
+    "memory_tail": []
+  },
+  {
+    "query": "Did he win Nobel Prize for relativity?",
+    "final_answer": "No. He received the 1921 Nobel Prize in Physics (awarded in 1922) for his explanation of the photoelectric effect, not for relativity.",
+    "summary": {
+      "hallucination": true,
+      "reason": "Hard gate blocked output after 2 attempts; no fully TRUE verification achieved",
+      "notes": [
+        "Non-claim fragment ignored: 'He received the 1921 Nobel Prize in Physics (awarded in 1922) for his explanation of the photoelectric effect, not for relativity.'"
+      ],
+      "error_type": "INSUFFICIENT_EVIDENCE",
+      "explanation": "No claims were extracted for verification, so the answer cannot be returned.",
+      "final_status": "FALSE",
+      "hard_gate_passed": false,
+      "metrics": {
+        "total_claims": 0,
+        "false_count": 0,
+        "uncertain_count": 0,
+        "uncertain_ratio": 0.0
+      }
+    },
+    "memory_tail": []
+  }
+]

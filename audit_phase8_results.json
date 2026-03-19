@@ -1,0 +1,74 @@
+[
+  {
+    "query": "Who won Nobel Prize for relativity?",
+    "original_answer": "No one won a Nobel Prize specifically “for relativity.” \n\nAlbert Einstein, who developed special and general relativity, received the 1921 Nobel Prize in Physics for his explanation of the photoelectric effect, not for relativity. Later Nobels recognized tests or consequences of general relativity (e.g., 1993 Hulse & Taylor for the binary pulsar, 2017 Weiss/Barish/Thorne for gravitational waves, 2020 Penrose/Genzel/Ghez for black holes).",
+    "last_corrected_answer": "Albert Einstein did not receive a Nobel Prize for relativity; his 1921 award was for the photoelectric effect.",
+    "final_answer": "Albert Einstein did not receive a Nobel Prize for relativity; his 1921 award was for the photoelectric effect.",
+    "final_answer_non_empty": true,
+    "correction_count": 2,
+    "attempts_used": 2,
+    "summary": {
+      "hallucination": false,
+      "reason": "Hard gate blocked output after 2 attempts; no fully TRUE verification achieved",
+      "notes": [],
+      "error_type": "VALID",
+      "explanation": "The response appears factually correct.",
+      "final_status": "FALSE",
+      "hard_gate_passed": false,
+      "metrics": {
+        "total_claims": 2,
+        "false_count": 0,
+        "uncertain_count": 1,
+        "uncertain_ratio": 0.5
+      }
+    }
+  },
+  {
+    "query": "2 + 2 = 5 right?",
+    "original_answer": "No—2 + 2 = 4 in standard arithmetic. It could come out to 5 only under special conventions, like rounding (e.g., 2.4 + 2.4 ≈ 4.8 ≈ 5) or if you redefine the operation.",
+    "last_corrected_answer": "No—2 + 2 = 4.",
+    "final_answer": "No—2 + 2 = 4.",
+    "final_answer_non_empty": true,
+    "correction_count": 2,
+    "attempts_used": 2,
+    "summary": {
+      "hallucination": true,
+      "reason": "Hard gate blocked output after 2 attempts; no fully TRUE verification achieved",
+      "notes": [],
+      "error_type": "INSUFFICIENT_EVIDENCE",
+      "explanation": "No claims were extracted for verification, so the answer cannot be returned.",
+      "final_status": "FALSE",
+      "hard_gate_passed": false,
+      "metrics": {
+        "total_claims": 0,
+        "false_count": 0,
+        "uncertain_count": 0,
+        "uncertain_ratio": 0.0
+      }
+    }
+  },
+  {
+    "query": "Humans have 3 lungs",
+    "original_answer": "That’s incorrect. Humans normally have two lungs—right and left. The right lung has three lobes, and the left lung has two lobes, which may be why people sometimes think there are “three.” Rare congenital anomalies can create extra lung tissue, but not a third full lung.",
+    "last_corrected_answer": "That’s incorrect. Humans normally have two lungs—right and left.",
+    "final_answer": "That’s incorrect. Humans normally have two lungs—right and left.",
+    "final_answer_non_empty": true,
+    "correction_count": 1,
+    "attempts_used": 1,
+    "summary": {
+      "hallucination": false,
+      "reason": "All extracted factual claims verified as true after fusion",
+      "notes": [],
+      "error_type": "VALID",
+      "explanation": "The response appears factually correct.",
+      "final_status": "TRUE",
+      "hard_gate_passed": true,
+      "metrics": {
+        "total_claims": 1,
+        "false_count": 0,
+        "uncertain_count": 0,
+        "uncertain_ratio": 0.0
+      }
+    }
+  }
+]

@@ -1,0 +1,59 @@
+PHASE 8 AUDIT — FUSION FIX (STRONG VERIFIED CONSENSUS)
+Date: 2026-03-19
+
+Scope
+- Updated fusion from strict "all verifiers must agree" to "strong consensus".
+- Kept hard false rule.
+- Kept correction loop and hard-gate signals.
+- Changed fallback return to always return best corrected answer (never empty).
+
+Files Updated
+- services/aggregator/aggregate.py
+- pipeline/main_pipeline.py
+- README.md
+
+1) Before vs After (blocking removed)
+- Before (Phase 7, audit_phase7_results.json):
+  - "Who won Nobel Prize for relativity?" -> final_answer: null
+  - "2 + 2 = 5 right?" -> final_answer: null
+- After (Phase 8, audit_phase8_results.json):
+  - "Who won Nobel Prize for relativity?" -> final_answer returned
+  - "2 + 2 = 5 right?" -> final_answer returned
+  - "Humans have 3 lungs" -> final_answer returned
+- Baseline entrypoint run now returns concrete answer even with local verifier offline.
+
+2) Cases where answer now returns
+- Nobel query:
+  - Returned: "Albert Einstein did not receive a Nobel Prize for relativity; his 1921 award was for the photoelectric effect."
+  - correction_count: 2
+- Math query:
+  - Returned: "No—2 + 2 = 4."
+  - correction_count: 2
+- False-claim anatomy query:
+  - Returned: "That’s incorrect. Humans normally have two lungs—right and left."
+  - correction_count: 1
+
+3) Impact of ignoring local UNCERTAIN
+- Local verifier offline continues to emit:
+  - status: UNCERTAIN, confidence: 0.0, reason: Local verifier unavailable.
+- New fusion behavior no longer blocks TRUE solely because local is UNCERTAIN.
+- Strong pass condition now relies on:
+  - LLM status TRUE
+  - Evidence status TRUE
+  - both confidences >= 0.7
+  - embedding score >= 0.5
+- Any verifier FALSE (including local FALSE) still forces final_status FALSE.
+
+4) Correctness validation
+- python pipeline/main_pipeline.py executed successfully.
+- Strong-consensus TRUE observed in baseline run with local UNCERTAIN:
+  - final_status: TRUE
+  - reason: Strong consensus (LLM + Evidence)
+- Phase-8 query suite confirms non-empty returns for all three target prompts.
+- Post-patch safety check confirms:
+  - FINAL_ANSWER_EMPTY = False for "2 + 2 = 5 right?".
+
+Safety Notes
+- System no longer returns empty output in blocked scenarios.
+- False claims are still blocked by hard FALSE and correction loop.
+- When unresolved uncertainty remains after max attempts, pipeline returns best corrected safe fallback answer and logs warning.

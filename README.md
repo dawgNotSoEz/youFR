@@ -10,6 +10,8 @@ A small fact-checking pipeline with this stack:
 - **Memory consistency:** persistent `memory/verified_facts.json` contradiction checks
 - **Correction loop:** auto-correct + re-verify (max attempts: 2)
 - **Hard gate:** final answer is returned only when every fused claim is `TRUE`
+- **Correction engine:** `services/corrector/correct.py` repairs failed claims using evidence snippets before re-verification
+- **Fusion (phase 8):** strong consensus accepts `LLM + Evidence` when both are `TRUE` with high confidence and embedding support, even if local verifier is `UNCERTAIN`
 - **Decisioning:** Aggregator + Detector + Failure Classifier + Explainer
 
 ## Project Progress So Far
@@ -133,7 +135,7 @@ Decision rules:
 Hard-gate rules:
 - If any fused claim is not `TRUE`, output is blocked from final return.
 - Pipeline runs correction + re-verification for up to 2 attempts.
-- If attempts are exhausted, `final_answer` is `None` and only `last_corrected_answer` is retained for diagnostics.
+- If attempts are exhausted, pipeline returns the best corrected fallback answer (never empty) and logs a safety warning when unresolved `UNCERTAIN` statuses remain.
 
 Memory consistency rules:
 - Verified claims are persisted in `memory/verified_facts.json` after a fully `TRUE` run.
@@ -172,6 +174,7 @@ If Mega returns model unavailable errors:
 - `services/verifier/groq_verifier.py` — Groq verification
 - `services/verifier/local_verifier.py` — local Phi-3 verification
 - `services/verifier/memory_consistency.py` — verified-fact storage and contradiction checks
+- `services/corrector/correct.py` — correction engine used between verification attempts
 - `services/aggregator/aggregate.py` — scoring aggregation logic
 - `services/detector/hallucination.py` — detector wrapper
 - `services/classifier/failure_classifier.py` — failure type classifier

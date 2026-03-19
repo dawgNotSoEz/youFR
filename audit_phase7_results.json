@@ -1,0 +1,35 @@
+[
+  {
+    "query": "Who won Nobel Prize for relativity?",
+    "original_answer": "No one received a Nobel Prize specifically “for relativity.” Albert Einstein won the 1921 Nobel Prize in Physics for his explanation of the photoelectric effect, not for relativity. Later prizes have honored work stemming from general relativity (e.g., 2017 for gravitational-wave detection; 2020 for black hole research).",
+    "last_corrected_answer": "No one. Albert Einstein’s 1921 Nobel Prize in Physics was for the photoelectric effect, not for relativity.",
+    "final_answer": null,
+    "correction_count": 2,
+    "attempts_used": 2,
+    "final_status": "FALSE",
+    "hard_gate_passed": false,
+    "reason": "Hard gate blocked output after 2 attempts; no fully TRUE verification achieved"
+  },
+  {
+    "query": "2 + 2 = 5 right?",
+    "original_answer": "No—under standard arithmetic, 2 + 2 = 4. \nThe only way you’d get 5 is via rounding/approximation (e.g., 2.4 + 2.4 ≈ 5) or as a joke/reference (e.g., Orwell’s “2 + 2 = 5”).",
+    "last_corrected_answer": "No—under standard arithmetic, 2 + 2 = 4.",
+    "final_answer": null,
+    "correction_count": 2,
+    "attempts_used": 2,
+    "final_status": "FALSE",
+    "hard_gate_passed": false,
+    "reason": "Hard gate blocked output after 2 attempts; no fully TRUE verification achieved"
+  },
+  {
+    "query": "Einstein won Nobel Prize for relativity and developed relativity",
+    "original_answer": "Small correction: Einstein did not win the Nobel Prize for relativity. He received the 1921 Nobel Prize in Physics (awarded in 1922) for his explanation of the photoelectric effect and his contributions to theoretical physics.\n\nHe did, however, develop relativity:\n- Special relativity (1905): Physics is the same in all inertial frames; the speed of light is constant; leads to E=mc².\n- General relativity (1915): Gravity is the curvature of spacetime caused by mass-energy; confirmed by the 1919 solar-eclipse observations of starlight bending.\n\nThe Nobel committee avoided awarding relativity at the time because they prioritized experimentally verified “discoveries,” and relativity’s tests were still being debated.",
+    "last_corrected_answer": "Einstein did not win the Nobel Prize for relativity; he received the 1921 Nobel Prize in Physics for explaining the photoelectric effect.\n\nHe did develop relativity:\n- Special relativity (1905).\n- General relativity (1915), whose prediction of starlight deflection near the Sun was confirmed during the 1919 solar eclipse.",
+    "final_answer": null,
+    "correction_count": 2,
+    "attempts_used": 2,
+    "final_status": "FALSE",
+    "hard_gate_passed": false,
+    "reason": "Hard gate blocked output after 2 attempts; no fully TRUE verification achieved"
+  }
+]
