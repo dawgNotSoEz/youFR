@@ -5,4 +5,21 @@ requests==2.32.3
 urllib3==2.2.3
 wikipedia==1.4.0
 sentence-transformers==3.2.1
-en-core-web-sm==3.8.0
+# NOTE: spaCy language model is not a normal PyPI dependency on Windows.
+# Install separately:
+#   python -m spacy download en_core_web_sm
+
+# Serving
+fastapi==0.115.0
+uvicorn==0.30.6
+pydantic==2.9.2
+rank-bm25==0.2.2
+redis==5.2.1
+psycopg[binary]==3.2.3
+
+# Testing
+pytest==8.3.4
+
+# Local verifier notes:
+# - No extra Python package is required because local verification uses HTTP calls via `requests`.
+# - You must install and run Ollama separately, and pull the `phi3` model.
