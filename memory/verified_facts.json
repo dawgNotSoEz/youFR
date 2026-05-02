@@ -22,5 +22,29 @@
     "status": "TRUE",
     "source_query": "Who invented relativity?",
     "verified_at": "2026-03-19T12:52:50.529643+00:00"
+  },
+  {
+    "claim": "Albert Einstein developed special relativity in 1905 and general relativity between 1907 and 1915.",
+    "status": "TRUE",
+    "source_query": "Who developed relativity?",
+    "verified_at": "2026-03-19T12:58:44.029224+00:00"
+  },
+  {
+    "claim": "He received the 1921 Nobel Prize in Physics (awarded in 1922) for his services to theoretical physics, especially for discovering the law of the photoelectric effect\u2014not for relativity.",
+    "status": "TRUE",
+    "source_query": "Did he win Nobel Prize for relativity?",
+    "verified_at": "2026-03-19T13:00:44.781781+00:00"
+  },
+  {
+    "claim": "Albert Einstein formulated special relativity in 1905 and general relativity in 1915.",
+    "status": "TRUE",
+    "source_query": "Who invented relativity?",
+    "verified_at": "2026-03-19T17:59:18.876560+00:00"
+  },
+  {
+    "claim": "Albert Einstein developed the special and general theories of relativity.",
+    "status": "TRUE",
+    "source_query": "Who invented relativity?",
+    "verified_at": "2026-03-20T12:49:40.811024+00:00"
   }
 ]

@@ -18,10 +18,7 @@ from services.verifier.memory_consistency import (
 from services.corrector.correct import correct_answer
 from services.aggregator.aggregate import aggregate_results, fuse
 from services.memory.memory_store import memory_db, store_verified_claims
-try:
-    from services.retriever.wiki_retriever import get_evidence
-except Exception:
-    from archive.services.retriever.wiki_retriever import get_evidence
+from services.retriever.wiki_retriever import get_evidence
 from services.classifier.failure_classifier import classify_failure
 from services.explainer.explain import generate_explanation
 from services.verifier.evidence_filter import is_evidence_relevant
