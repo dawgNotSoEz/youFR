@@ -12,12 +12,12 @@ class VerifiedMemoryContradictionVerifier:
     name = "verified_memory"
 
     def __init__(self):
-        from services.verifier.memory_consistency import load_verified_facts
+        from ai_hall.memory.verified_memory import load_verified_facts
 
         self._verified_facts = load_verified_facts()
 
     def verify(self, claim: Claim, evidence: EvidenceSet) -> VerifierOutput:
-        from services.verifier.memory_consistency import check_memory_contradiction
+        from ai_hall.memory.verified_memory import check_memory_contradiction
 
         memory_result = check_memory_contradiction(claim.text, self._verified_facts)
         if memory_result:

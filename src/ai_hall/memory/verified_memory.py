@@ -1,10 +1,26 @@
+from __future__ import annotations
+
 import json
 from datetime import datetime, timezone
 from pathlib import Path
 
 
-ROOT_DIR = Path(__file__).resolve().parents[2]
-VERIFIED_FACTS_PATH = ROOT_DIR / "memory" / "verified_facts.json"
+# Runtime Memory Store (in-memory, used across single process runs)
+_RUNTIME_MEMORY: list[str] = []
+
+
+def store_verified_claims(claims: list[str], results: list[dict]) -> None:
+    for claim, result in zip(claims, results):
+        if result.get("final_status") == "TRUE" and claim not in _RUNTIME_MEMORY:
+            _RUNTIME_MEMORY.append(claim)
+
+
+def get_memory_context(query: str) -> str:
+    return "\n".join(_RUNTIME_MEMORY[-5:])
+
+
+# Persistent Facts Memory Store (verified_facts.json)
+DEFAULT_VERIFIED_FACTS_PATH = Path("memory") / "verified_facts.json"
 
 
 def _normalize_text(text: str) -> str:
@@ -37,7 +53,7 @@ def _negation_variant(text: str) -> str:
 
 
 def load_verified_facts(path: Path | None = None) -> list[dict]:
-    facts_path = path or VERIFIED_FACTS_PATH
+    facts_path = path or DEFAULT_VERIFIED_FACTS_PATH
     if not facts_path.exists():
         return []
 
@@ -49,7 +65,7 @@ def load_verified_facts(path: Path | None = None) -> list[dict]:
 
 
 def save_verified_facts(facts: list[dict], path: Path | None = None) -> None:
-    facts_path = path or VERIFIED_FACTS_PATH
+    facts_path = path or DEFAULT_VERIFIED_FACTS_PATH
     facts_path.parent.mkdir(parents=True, exist_ok=True)
     facts_path.write_text(json.dumps(facts, indent=2), encoding="utf-8")
 

@@ -32,7 +32,7 @@ class WikiRetrieverAdapter:
         self.cfg = cfg or RetrievalConfig()
 
     def retrieve(self, claim: Claim) -> EvidenceSet:
-        from services.retriever.wiki_retriever import get_evidence
+        from ai_hall.retrievers.wiki import get_evidence
 
         payload = get_evidence(claim.text) or {}
         evidence_text = str(payload.get("evidence", "") or "")

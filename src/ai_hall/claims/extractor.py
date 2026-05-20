@@ -3,19 +3,21 @@ from __future__ import annotations
 import re
 from typing import Iterable
 
-import spacy
-
 from ai_hall.pipeline.types import Claim, ClaimType, TextSpan
 from ai_hall.utils.hashing import stable_hash
 
-
+# Try loading spaCy but support graceful fallback if import or load fails (e.g. Python 3.14 incompatibilities)
 try:
-    _nlp = spacy.load("en_core_web_sm")
+    import spacy
+    try:
+        _nlp = spacy.load("en_core_web_sm")
+    except Exception:
+        # Fallback: basic English pipeline for sentence splitting.
+        _nlp = spacy.blank("en")
+        if "sentencizer" not in _nlp.pipe_names:
+            _nlp.add_pipe("sentencizer")
 except Exception:
-    # Fallback: basic English pipeline for sentence splitting.
-    _nlp = spacy.blank("en")
-    if "sentencizer" not in _nlp.pipe_names:
-        _nlp.add_pipe("sentencizer")
+    _nlp = None
 
 
 JUNK_PATTERNS = (
@@ -66,10 +68,18 @@ def extract_claims(answer_text: str) -> list[Claim]:
             offset += len(raw_line) + 1
             continue
 
-        doc = _nlp(base)
-        has_syntax = any(p in _nlp.pipe_names for p in ("tagger", "parser"))
-        for sent in doc.sents:
-            s = _clean_line(sent.text)
+        if _nlp is not None:
+            try:
+                doc = _nlp(base)
+                sents = [sent.text for sent in doc.sents]
+            except Exception:
+                sents = [s.strip() for s in re.split(r'(?<=[.!?])\s+', base) if s.strip()]
+        else:
+            # Premium pure-Python sentence splitter fallback
+            sents = [s.strip() for s in re.split(r'(?<=[.!?])\s+', base) if s.strip()]
+
+        for sent_text in sents:
+            s = _clean_line(sent_text)
             if not s or len(s) < 20:
                 continue
             lower = s.lower()
@@ -78,21 +88,31 @@ def extract_claims(answer_text: str) -> list[Claim]:
             if _is_opinion(s):
                 continue
 
-            sdoc = _nlp(s)
-            if has_syntax:
-                # Require verb and a subject-like token for factuality.
-                if not _has_verb(sdoc):
-                    continue
-                has_subject = any(tok.dep_ in {"nsubj", "nsubjpass", "expl"} for tok in sdoc)
-                if not has_subject:
-                    continue
+            if _nlp is not None:
+                try:
+                    sdoc = _nlp(s)
+                    has_syntax = any(p in _nlp.pipe_names for p in ("tagger", "parser"))
+                    if has_syntax:
+                        # Require verb and a subject-like token for factuality.
+                        if not _has_verb(sdoc):
+                            continue
+                        has_subject = any(tok.dep_ in {"nsubj", "nsubjpass", "expl"} for tok in sdoc)
+                        if not has_subject:
+                            continue
+
+                    entities = [ent.text for ent in getattr(sdoc, "ents", [])][:10]
+                except Exception:
+                    # Inner fallback if document parsing fails
+                    entities = list(set(re.findall(r'\b[A-Z][a-zA-Z0-9-]+\b', s)))[:10]
+            else:
+                # Premium pure-Python entity parser fallback (regex word capitalization matching)
+                entities = list(set(re.findall(r'\b[A-Z][a-zA-Z0-9-]+\b', s)))[:10]
 
             claim_text = s if s.endswith((".", "!", "?")) else f"{s}."
             if claim_text in seen:
                 continue
             seen.add(claim_text)
 
-            entities = [ent.text for ent in getattr(sdoc, "ents", [])][:10]
             ctype = _claim_type_heuristic(claim_text)
             claim_id = stable_hash({"claim": claim_text})
 
@@ -111,4 +131,5 @@ def extract_claims(answer_text: str) -> list[Claim]:
         offset += len(raw_line) + 1
 
     return claims
+
 
