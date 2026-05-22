@@ -11,12 +11,12 @@ try:
     import spacy
     try:
         _nlp = spacy.load("en_core_web_sm")
-    except Exception:
+    except BaseException:
         # Fallback: basic English pipeline for sentence splitting.
         _nlp = spacy.blank("en")
         if "sentencizer" not in _nlp.pipe_names:
             _nlp.add_pipe("sentencizer")
-except Exception:
+except BaseException:
     _nlp = None
 
 
